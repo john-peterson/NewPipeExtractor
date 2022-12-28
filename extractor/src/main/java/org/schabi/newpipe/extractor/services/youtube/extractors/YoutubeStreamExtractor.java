@@ -545,10 +545,11 @@ public class YoutubeStreamExtractor extends StreamExtractor {
     public String getTopicUrl() throws ParsingException {
         // This is not in the api yet topicDetails is empty
         // https://developers.google.com/youtube/v3/docs/videos/list
-        String url = getUrl();
+        String url = "";
         try {
             String data = "";
-            Document doc = Jsoup.connect(url).get();
+            String videoUrl = getUrl();
+            Document doc = Jsoup.connect(videoUrl).get();
             org.jsoup.select.Elements el = doc.select("script");
             for (org.jsoup.nodes.Element e : el) {
                 if (e.data().contains("ytInitialData")) {
@@ -568,9 +569,13 @@ public class YoutubeStreamExtractor extends StreamExtractor {
                 .getObject(0).getObject("richMetadataRenderer").getObject("endpoint")
                 .getObject("commandMetadata").getObject("webCommandMetadata").getString("url");
         } catch (final Exception e) {
-            throw new ParsingException("Could not get url: " + url);
+            throw new ParsingException("Could not find any topic");
         }
-        return url;
+        if (isNullOrEmpty(url) || url.contains("youtubekids.com")) {
+            throw new ParsingException("Could not find any topic");
+        } else {
+            return getBaseUrl() + url;
+        }
     }
 
     @Nonnull
